@@ -2,4 +2,3 @@ backups
 .ipynb_checkpoints
 .venv
 __pycache__
-main.ipynb
