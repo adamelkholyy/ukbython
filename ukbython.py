@@ -11,7 +11,7 @@ from pyspark.sql import DataFrame
 
 # pdoc ./ukbython -o ./docs
 
-class ukbpython:
+class ukbython:
     """
     ukbython: Tools for easily accessing UK Biobank RAP data. Features include simple filtering, fast phenotype retrieval, and custom SQL querying.
     **Example**:
@@ -116,7 +116,7 @@ class ukbpython:
 
     def get_gp_clinical(self, codes):
         # remove the . from codes 
-        formatted_codes = ", ".join([f"'{(code.split(".")[0] + ".")[:5]}'" for code in codes])
+        formatted_codes = ", ".join([f"'{(code.split('.')[0] + '.')[:5]}'" for code in codes])
         df = self.spark.sql(f"SELECT DISTINCT eid, event_dt FROM `{self.database}`.`gp_clinical` WHERE read_2 IN ({formatted_codes})")
         return df
 
