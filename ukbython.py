@@ -78,7 +78,7 @@ class ukbython:
 
 
 
-    def get_icd9(self, codes: list, unique_eids=True):
+    def get_icd9(self, codes: list, unique_eids=True, earliest_date=True):
         """
         Returns a DataFrame of all eids with matching ICD9 records
 
@@ -92,16 +92,39 @@ class ukbython:
         # ICD9: remove . from codes, first 5 characters only
         formatted_codes = ", ".join([f"'{code.replace('.', '')[:5]}'" for code in codes])
         df = self.spark.sql(f"SELECT {distinct} eid, dnx_hesin_id FROM `{self.database}`.`hesin_diag` WHERE diag_icd9 IN ({formatted_codes})")
+        df = self.get_hesin_dates(df, earliest_date=earliest_date)
         return df
-    
 
 
+    def get_icd10(self, codes:list, unique_eids=True, earliest_date=True):
+        if earliest_date:
+            unique_eids = True
+        hesin_df = self.get_icd10_hesin(codes, unique_eids=unique_eids, earliest_date=earliest_date)
+        death_df = self.get_icd10_death(codes, unique_eids=unique_eids)
+        cancer_df = self.get_icd10_cancer(codes, unique_eids=unique_eids, earliest_date=earliest_date)
+        df = hesin_df.join(death_df, on="eid", how="outer")
+        df = df.join(cancer_df, on="eid", how="outer")
 
-    def get_icd10_hesin(self, codes: list, unique_eids=True):
+        if earliest_date:
+            df = df.withColumn(
+                "diagnosis_date",
+                F.least(
+                    F.col("diagnosis_date"),
+                    F.col("event_dt"),
+                    F.col("date_of_death")
+                )
+            )
+            df = df.select("eid", "diagnosis_date")
+
+        return df
+
+
+    def get_icd10_hesin(self, codes: list, unique_eids=True, earliest_date=True):
         distinct = "DISTINCT" if unique_eids else ""
         # ICD10: remove . from codes, first 5 characters only
         formatted_codes = ", ".join([f"'{code.replace('.', '')[:5]}'" for code in codes])
         df = self.spark.sql(f"SELECT {distinct} eid, dnx_hesin_id FROM `{self.database}`.`hesin_diag` WHERE diag_icd10 IN ({formatted_codes})")
+        df = self.get_hesin_dates(df, earliest_date=earliest_date)
         return df
     
     
@@ -110,32 +133,33 @@ class ukbython:
         formatted_codes = ", ".join([f"'{code.replace('.', '')[:5]}'" for code in codes])
         # DISTINCT is perfunctory here ... you only die once!
         df = self.spark.sql(f"SELECT eid, dnx_death_id FROM `{self.database}`.`death_cause` WHERE cause_icd10 IN ({formatted_codes})")
+        df = self.get_death_dates(df)
         return df
     
     
     
-    def get_hesin_oper(self, codes: list, unique_eids=True, earliest_date=True):
+    def get_opcs_code(self, codes: list, unique_eids=True):
         distinct = "DISTINCT" if unique_eids else ""
         # OPCS3, OPCS4: remove the . from codes, first 5 chars only
         formatted_codes = ", ".join([f"'{code.replace('.', '')[:5]}'" for code in codes])
         df = self.spark.sql(f"SELECT {distinct} eid, opdate FROM `{self.database}`.`hesin_oper` WHERE oper3 IN ({formatted_codes}) OR oper4 in ({formatted_codes})")
         
         # get earliest available date for duplicate eids
-        if earliest_date:
+        if unique_eids:
             df = df.groupBy("eid").agg(F.min("opdate").alias("opdate"))
             
         return df
 
     
 
-    def get_gp_clinical(self, codes, unique_eids=True, earliest_date=True):
+    def get_gp_clinical(self, codes, unique_eids=True):
         distinct = "DISTINCT" if unique_eids else ""
         # Read2, Read3: first 5 chars only
         formatted_codes = ", ".join([f"'{code[:5]}'" for code in codes])
         df = self.spark.sql(f"SELECT {distinct} eid, event_dt FROM `{self.database}`.`gp_clinical` WHERE read_2 IN ({formatted_codes})")
         
         # get earliest available date for duplicate eids
-        if earliest_date:
+        if unique_eids:
             df = df.groupBy("eid").agg(F.min("event_dt").alias("event_dt"))
             
         return df
@@ -151,7 +175,8 @@ class ukbython:
         df = df.withColumn('diagnosis_date', F.coalesce('epistart', 'epiend', 'admidate', 'disdate'))
 
         # group by eid and get the earliest diagnosis year for each participant
-        df = df.groupBy('eid').agg(F.min('diagnosis_date').alias('diagnosis_date'))
+        if earliest_date:
+            df = df.groupBy('eid').agg(F.min('diagnosis_date').alias('diagnosis_date'))
 
         return df.select("eid", "diagnosis_date")
 
@@ -171,7 +196,7 @@ class ukbython:
         return df
 
 
-    def get_cancer(self, codes: list, unique_eids=True, earliest_date=True):
+    def get_icd10_cancer(self, codes: list, unique_eids=True, earliest_date=True):
         distinct = "DISTINCT" if unique_eids else ""
         formatted_codes = ", ".join([f"'{code.replace('.', '')[:5]}'" for code in codes])
 
@@ -273,57 +298,4 @@ class ukbython:
     def __str__(self):
         return f"PySpark running on database '{self.database}'"
     
-    
-"""
-selfrep_fields = [
-'p20001_i0_a0', 'p20001_i0_a1', 'p20001_i0_a2', 'p20001_i0_a3', 'p20001_i0_a4', 'p20001_i0_a5', 
-'p20001_i1_a0', 'p20001_i1_a1', 'p20001_i1_a2', 'p20001_i1_a3', 'p20001_i1_a4', 'p20001_i1_a5',
-'p20001_i2_a0', 'p20001_i2_a1', 'p20001_i2_a2', 'p20001_i2_a3', 'p20001_i2_a4', 'p20001_i2_a5', 
-'p20001_i3_a0', 'p20001_i3_a1', 'p20001_i3_a2', 'p20001_i3_a3', 'p20001_i3_a4', 'p20001_i3_a5',
-'p20006_i0_a0', 'p20006_i0_a1', 'p20006_i0_a2', 'p20006_i0_a3', 'p20006_i0_a4', 'p20006_i0_a5', 
-'p20006_i1_a0', 'p20006_i1_a1', 'p20006_i1_a2', 'p20006_i1_a3', 'p20006_i1_a4', 'p20006_i1_a5',
-'p20006_i2_a0', 'p20006_i2_a1', 'p20006_i2_a2', 'p20006_i2_a3', 'p20006_i2_a4', 'p20006_i2_a5', 
-'p20006_i3_a0', 'p20006_i3_a1', 'p20006_i3_a2', 'p20006_i3_a3', 'p20006_i3_a4', 'p20006_i3_a5',
-'p20002_i0_a0', 'p20002_i0_a1', 'p20002_i0_a2', 'p20002_i0_a3', 'p20002_i0_a4', 'p20002_i0_a5', 
-'p20002_i0_a6', 'p20002_i0_a7', 'p20002_i0_a8', 'p20002_i0_a9', 'p20002_i0_a10', 'p20002_i0_a11', 
-'p20002_i0_a12', 'p20002_i0_a13', 'p20002_i0_a14', 'p20002_i0_a15', 'p20002_i0_a16', 'p20002_i0_a17',
-'p20002_i0_a18', 'p20002_i0_a19', 'p20002_i0_a20', 'p20002_i0_a21', 'p20002_i0_a22', 'p20002_i0_a23', 
-'p20002_i0_a24', 'p20002_i0_a25', 'p20002_i0_a26', 'p20002_i0_a27', 'p20002_i0_a28', 'p20002_i0_a29', 
-'p20002_i0_a30', 'p20002_i1_a0', 'p20002_i1_a1', 'p20002_i1_a2', 'p20002_i1_a3', 'p20002_i1_a4', 
-'p20002_i1_a5', 'p20002_i1_a6', 'p20002_i1_a7', 'p20002_i1_a8', 'p20002_i1_a9', 'p20002_i1_a10', 
-'p20002_i1_a11', 'p20002_i1_a12', 'p20002_i1_a13', 'p20002_i1_a14', 'p20002_i1_a15', 'p20002_i1_a16', 
-'p20002_i1_a17', 'p20002_i1_a18', 'p20002_i1_a19', 'p20002_i1_a20', 'p20002_i1_a21', 'p20002_i1_a22', 
-'p20002_i1_a23', 'p20002_i1_a24', 'p20002_i1_a25', 'p20002_i1_a26', 'p20002_i1_a27', 'p20002_i1_a28',
-'p20002_i1_a29', 'p20002_i1_a30', 'p20002_i2_a0', 'p20002_i2_a1', 'p20002_i2_a2', 'p20002_i2_a3', 
-'p20002_i2_a4', 'p20002_i2_a5', 'p20002_i2_a6', 'p20002_i2_a7', 'p20002_i2_a8', 'p20002_i2_a9',
-'p20002_i2_a10', 'p20002_i2_a11', 'p20002_i2_a12', 'p20002_i2_a13', 'p20002_i2_a14', 'p20002_i2_a15', 
-'p20002_i2_a16', 'p20002_i2_a17', 'p20002_i2_a18', 'p20002_i2_a19', 'p20002_i2_a20', 'p20002_i2_a21',
-'p20002_i2_a22', 'p20002_i2_a23', 'p20002_i2_a24', 'p20002_i2_a25', 'p20002_i2_a26', 'p20002_i2_a27',
-'p20002_i2_a28', 'p20002_i2_a29', 'p20002_i2_a30', 'p20002_i3_a0', 'p20002_i3_a1', 'p20002_i3_a2', 
-'p20002_i3_a3', 'p20002_i3_a4', 'p20002_i3_a5', 'p20002_i3_a6', 'p20002_i3_a7', 'p20002_i3_a8', 
-'p20002_i3_a9', 'p20002_i3_a10', 'p20002_i3_a11', 'p20002_i3_a12', 'p20002_i3_a13', 'p20002_i3_a14', 
-'p20002_i3_a15', 'p20002_i3_a16', 'p20002_i3_a17', 'p20002_i3_a18', 'p20002_i3_a19', 'p20002_i3_a20',
-'p20002_i3_a21', 'p20002_i3_a22', 'p20002_i3_a23', 'p20002_i3_a24', 'p20002_i3_a25', 'p20002_i3_a26',
-'p20002_i3_a27', 'p20002_i3_a28', 'p20002_i3_a29', 'p20002_i3_a30', 'p20008_i0_a0', 'p20008_i0_a1',
-'p20008_i0_a2', 'p20008_i0_a3', 'p20008_i0_a4', 'p20008_i0_a5', 'p20008_i0_a6', 'p20008_i0_a7', 
-'p20008_i0_a8', 'p20008_i0_a9', 'p20008_i0_a10', 'p20008_i0_a11', 'p20008_i0_a12', 'p20008_i0_a13',
-'p20008_i0_a14', 'p20008_i0_a15', 'p20008_i0_a16', 'p20008_i0_a17', 'p20008_i0_a18', 'p20008_i0_a19',
-'p20008_i0_a20', 'p20008_i0_a21', 'p20008_i0_a22', 'p20008_i0_a23', 'p20008_i0_a24', 'p20008_i0_a25',
-'p20008_i0_a26', 'p20008_i0_a27', 'p20008_i0_a28', 'p20008_i0_a29', 'p20008_i0_a30', 'p20008_i1_a0', 
-'p20008_i1_a1', 'p20008_i1_a2', 'p20008_i1_a3', 'p20008_i1_a4', 'p20008_i1_a5', 'p20008_i1_a6', 
-'p20008_i1_a7', 'p20008_i1_a8', 'p20008_i1_a9', 'p20008_i1_a10', 'p20008_i1_a11', 'p20008_i1_a12',
-'p20008_i1_a13', 'p20008_i1_a14', 'p20008_i1_a15', 'p20008_i1_a16', 'p20008_i1_a17', 'p20008_i1_a18',
-'p20008_i1_a19', 'p20008_i1_a20', 'p20008_i1_a21', 'p20008_i1_a22', 'p20008_i1_a23', 'p20008_i1_a24', 
-'p20008_i1_a25', 'p20008_i1_a26', 'p20008_i1_a27', 'p20008_i1_a28', 'p20008_i1_a29', 'p20008_i1_a30',
-'p20008_i2_a0', 'p20008_i2_a1', 'p20008_i2_a2', 'p20008_i2_a3', 'p20008_i2_a4', 'p20008_i2_a5', 
-'p20008_i2_a6', 'p20008_i2_a7', 'p20008_i2_a8', 'p20008_i2_a9', 'p20008_i2_a10', 'p20008_i2_a11', 
-'p20008_i2_a12', 'p20008_i2_a13', 'p20008_i2_a14', 'p20008_i2_a15', 'p20008_i2_a16', 'p20008_i2_a17',
-'p20008_i2_a18', 'p20008_i2_a19', 'p20008_i2_a20', 'p20008_i2_a21', 'p20008_i2_a22', 'p20008_i2_a23', 
-'p20008_i2_a24', 'p20008_i2_a25', 'p20008_i2_a26', 'p20008_i2_a27', 'p20008_i2_a28', 'p20008_i2_a29', 
-'p20008_i2_a30', 'p20008_i3_a0', 'p20008_i3_a1', 'p20008_i3_a2', 'p20008_i3_a3', 'p20008_i3_a4', 
-'p20008_i3_a5', 'p20008_i3_a6', 'p20008_i3_a7', 'p20008_i3_a8', 'p20008_i3_a9', 'p20008_i3_a10',
-'p20008_i3_a11', 'p20008_i3_a12', 'p20008_i3_a13', 'p20008_i3_a14', 'p20008_i3_a15', 'p20008_i3_a16',
-'p20008_i3_a17', 'p20008_i3_a18', 'p20008_i3_a19', 'p20008_i3_a20', 'p20008_i3_a21', 'p20008_i3_a22', 
-'p20008_i3_a23', 'p20008_i3_a24', 'p20008_i3_a25', 'p20008_i3_a26', 'p20008_i3_a27', 'p20008_i3_a28',
-'p20008_i3_a29', 'p20008_i3_a30']
-"""
+ 
