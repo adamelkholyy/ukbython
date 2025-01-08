@@ -297,5 +297,4 @@ class ukbython:
         
     def __str__(self):
         return f"PySpark running on database '{self.database}'"
-    
- 
+
