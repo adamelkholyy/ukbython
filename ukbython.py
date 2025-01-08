@@ -182,6 +182,9 @@ class ukbython:
             print("Error: Fields not found...")
             return
         
+        for code, table in lookup:
+            print(f"{code} found in {table}")
+        
         code, table = lookup[0]
         df = self.spark.sql(f"SELECT eid, {code} FROM `{self.database}`.`{table}`")    
 
