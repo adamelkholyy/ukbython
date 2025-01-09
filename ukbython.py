@@ -10,7 +10,7 @@ from pyspark.sql import DataFrame
  
 # lock for pyspark: WRAP IN A TRY AND EXCEPT 
 # main example 
-# hmb_mp_phenotype main conversion to newer ukbython package 
+# cluster_main conversion to newer ukbython package (rename hmb_mp_phneotype)
 
 # pdoc ./ukbython -o ./docs
 # code filtering https://github.com/lcpilling/ukbrapR/blob/main/R/get_diagnoses.R, line: 122
@@ -172,7 +172,7 @@ class ukbython:
         
         # Read2, Read3: first 5 chars only
         formatted_codes = ", ".join([f"'{code[:5]}'" for code in codes])
-        df = self.spark.sql(f"SELECT DISTINCT eid, event_dt FROM `{self.database}`.`gp_clinical` WHERE read_2 IN ({formatted_codes})")
+        df = self.spark.sql(f"SELECT DISTINCT eid, event_dt FROM `{self.database}`.`gp_clinical` WHERE read_2 IN ({formatted_codes}) OR read_3 IN ({formatted_codes})")
         
         # get earliest available date for duplicate eids
         if unique_eids:
