@@ -7,10 +7,7 @@ from pyspark.sql import DataFrame
 
 # TODO 
 # comments and docs 
- 
-# lock for pyspark: WRAP IN A TRY AND EXCEPT 
-# main example 
-# cluster_main conversion to newer ukbython package (rename hmb_mp_phneotype)
+# lock for pyspark
 
 # pdoc ./ukbython -o ./docs
 # code filtering https://github.com/lcpilling/ukbrapR/blob/main/R/get_diagnoses.R, line: 122
