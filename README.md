@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 # ukpython: Phenotype Derivation Tools for the UK Biobank RAP     
 ```ukbython``` allows simple querying, filtering, and data retrieval from the UK Biobank RAP with a variety of tools available, written for speed and ease of use.     
+=======
+# ukpython: Phenotype derivation tools for the UK Biobank RAP     
+Work In Progress - ```ukbython``` allows simple querying, filtering, and data retrieval from the UK Biobank RAP with a variety of tools available, written for speed and ease of use.     
+>>>>>>> b8406fa6877111b05d774672c4f7c4785b3422ed
                   
 ```python
 import subprocess
