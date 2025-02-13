@@ -1,68 +1,122 @@
-# ukpython: Phenotype Derivation Tools for the UK Biobank RAP     
-```ukbython``` allows simple querying, filtering, and data retrieval from the UK Biobank RAP with a variety of tools available, written for speed and ease of use.       
-[Read the docs here!](https://adamelkholyy.github.io/ukbython/ukbython.html)      
+# ukbython: Phenotype Derivation Tools for the UK Biobank RAP     
+<strong>Adam El Kholy | [A.El-Kholy@exeter.ac.uk](mailto:A.El-Kholy@exeter.ac.uk) | Last updated: 13/02/2025   </strong>   
 
+## [Read the docs here!](https://adamelkholyy.github.io/ukbython/ukbython.html) 
 
+```ukbython``` allows for easy phenotype derivation in Python with simple querying, filtering, and data retrieval from the UK Biobank RAP. Features eid and earliest diagnosis date retrieval across all major coding schemas along with fast lookup and retrieval of any field in the database and functionality for custom queries using SQL with PySpark.     
+
+Valid coding schemas
+- ICD9
+- ICD10
+- Read2
+- Read3
+- OPCS3
+- OPCS4            
+
+Tables used for code lookup
+- Hospital inpatient data
+- GP clinical records
+- Death records
+- Cancer registry
+
+## Installation 
+<strong>To run `ukbython` start an instance of JupyterLab with SparkCluster on the UK Biobank RAP</strong>
+
+To import `ukbython` using Python:
 ```python
 import subprocess
 subprocess.run(f"curl -L -o ukbython.py https://raw.githubusercontent.com/adamelkholyy/ukbython/main/ukbython.py", shell=True, check=True)
 subprocess.run(f"curl -L -o field_lookup.json https://raw.githubusercontent.com/adamelkholyy/ukbython/main/field_lookup.json", shell=True, check=True)
 ```
 
+To import `ukbython` using Git:
+```bash
+gh download adamelkholyy/ukbython -p "ukbython.py"  
+gh download adamelkholyy/ukbython -p "field_lookup.json"  
+```
+
+## Examples
+1. Initialising `ukbython` and connecting to the UK Biobank database:
+```python
+from ukbython import ukbython
+ukb = ukbython()
+```
+```
+Running on database app103356_20241205153134...
+```
 
 
-<!-- Selfrep codes 
-"""
-selfrep_fields = [
-'p20001_i0_a0', 'p20001_i0_a1', 'p20001_i0_a2', 'p20001_i0_a3', 'p20001_i0_a4', 'p20001_i0_a5', 
-'p20001_i1_a0', 'p20001_i1_a1', 'p20001_i1_a2', 'p20001_i1_a3', 'p20001_i1_a4', 'p20001_i1_a5',
-'p20001_i2_a0', 'p20001_i2_a1', 'p20001_i2_a2', 'p20001_i2_a3', 'p20001_i2_a4', 'p20001_i2_a5', 
-'p20001_i3_a0', 'p20001_i3_a1', 'p20001_i3_a2', 'p20001_i3_a3', 'p20001_i3_a4', 'p20001_i3_a5',
-'p20006_i0_a0', 'p20006_i0_a1', 'p20006_i0_a2', 'p20006_i0_a3', 'p20006_i0_a4', 'p20006_i0_a5', 
-'p20006_i1_a0', 'p20006_i1_a1', 'p20006_i1_a2', 'p20006_i1_a3', 'p20006_i1_a4', 'p20006_i1_a5',
-'p20006_i2_a0', 'p20006_i2_a1', 'p20006_i2_a2', 'p20006_i2_a3', 'p20006_i2_a4', 'p20006_i2_a5', 
-'p20006_i3_a0', 'p20006_i3_a1', 'p20006_i3_a2', 'p20006_i3_a3', 'p20006_i3_a4', 'p20006_i3_a5',
-'p20002_i0_a0', 'p20002_i0_a1', 'p20002_i0_a2', 'p20002_i0_a3', 'p20002_i0_a4', 'p20002_i0_a5', 
-'p20002_i0_a6', 'p20002_i0_a7', 'p20002_i0_a8', 'p20002_i0_a9', 'p20002_i0_a10', 'p20002_i0_a11', 
-'p20002_i0_a12', 'p20002_i0_a13', 'p20002_i0_a14', 'p20002_i0_a15', 'p20002_i0_a16', 'p20002_i0_a17',
-'p20002_i0_a18', 'p20002_i0_a19', 'p20002_i0_a20', 'p20002_i0_a21', 'p20002_i0_a22', 'p20002_i0_a23', 
-'p20002_i0_a24', 'p20002_i0_a25', 'p20002_i0_a26', 'p20002_i0_a27', 'p20002_i0_a28', 'p20002_i0_a29', 
-'p20002_i0_a30', 'p20002_i1_a0', 'p20002_i1_a1', 'p20002_i1_a2', 'p20002_i1_a3', 'p20002_i1_a4', 
-'p20002_i1_a5', 'p20002_i1_a6', 'p20002_i1_a7', 'p20002_i1_a8', 'p20002_i1_a9', 'p20002_i1_a10', 
-'p20002_i1_a11', 'p20002_i1_a12', 'p20002_i1_a13', 'p20002_i1_a14', 'p20002_i1_a15', 'p20002_i1_a16', 
-'p20002_i1_a17', 'p20002_i1_a18', 'p20002_i1_a19', 'p20002_i1_a20', 'p20002_i1_a21', 'p20002_i1_a22', 
-'p20002_i1_a23', 'p20002_i1_a24', 'p20002_i1_a25', 'p20002_i1_a26', 'p20002_i1_a27', 'p20002_i1_a28',
-'p20002_i1_a29', 'p20002_i1_a30', 'p20002_i2_a0', 'p20002_i2_a1', 'p20002_i2_a2', 'p20002_i2_a3', 
-'p20002_i2_a4', 'p20002_i2_a5', 'p20002_i2_a6', 'p20002_i2_a7', 'p20002_i2_a8', 'p20002_i2_a9',
-'p20002_i2_a10', 'p20002_i2_a11', 'p20002_i2_a12', 'p20002_i2_a13', 'p20002_i2_a14', 'p20002_i2_a15', 
-'p20002_i2_a16', 'p20002_i2_a17', 'p20002_i2_a18', 'p20002_i2_a19', 'p20002_i2_a20', 'p20002_i2_a21',
-'p20002_i2_a22', 'p20002_i2_a23', 'p20002_i2_a24', 'p20002_i2_a25', 'p20002_i2_a26', 'p20002_i2_a27',
-'p20002_i2_a28', 'p20002_i2_a29', 'p20002_i2_a30', 'p20002_i3_a0', 'p20002_i3_a1', 'p20002_i3_a2', 
-'p20002_i3_a3', 'p20002_i3_a4', 'p20002_i3_a5', 'p20002_i3_a6', 'p20002_i3_a7', 'p20002_i3_a8', 
-'p20002_i3_a9', 'p20002_i3_a10', 'p20002_i3_a11', 'p20002_i3_a12', 'p20002_i3_a13', 'p20002_i3_a14', 
-'p20002_i3_a15', 'p20002_i3_a16', 'p20002_i3_a17', 'p20002_i3_a18', 'p20002_i3_a19', 'p20002_i3_a20',
-'p20002_i3_a21', 'p20002_i3_a22', 'p20002_i3_a23', 'p20002_i3_a24', 'p20002_i3_a25', 'p20002_i3_a26',
-'p20002_i3_a27', 'p20002_i3_a28', 'p20002_i3_a29', 'p20002_i3_a30', 'p20008_i0_a0', 'p20008_i0_a1',
-'p20008_i0_a2', 'p20008_i0_a3', 'p20008_i0_a4', 'p20008_i0_a5', 'p20008_i0_a6', 'p20008_i0_a7', 
-'p20008_i0_a8', 'p20008_i0_a9', 'p20008_i0_a10', 'p20008_i0_a11', 'p20008_i0_a12', 'p20008_i0_a13',
-'p20008_i0_a14', 'p20008_i0_a15', 'p20008_i0_a16', 'p20008_i0_a17', 'p20008_i0_a18', 'p20008_i0_a19',
-'p20008_i0_a20', 'p20008_i0_a21', 'p20008_i0_a22', 'p20008_i0_a23', 'p20008_i0_a24', 'p20008_i0_a25',
-'p20008_i0_a26', 'p20008_i0_a27', 'p20008_i0_a28', 'p20008_i0_a29', 'p20008_i0_a30', 'p20008_i1_a0', 
-'p20008_i1_a1', 'p20008_i1_a2', 'p20008_i1_a3', 'p20008_i1_a4', 'p20008_i1_a5', 'p20008_i1_a6', 
-'p20008_i1_a7', 'p20008_i1_a8', 'p20008_i1_a9', 'p20008_i1_a10', 'p20008_i1_a11', 'p20008_i1_a12',
-'p20008_i1_a13', 'p20008_i1_a14', 'p20008_i1_a15', 'p20008_i1_a16', 'p20008_i1_a17', 'p20008_i1_a18',
-'p20008_i1_a19', 'p20008_i1_a20', 'p20008_i1_a21', 'p20008_i1_a22', 'p20008_i1_a23', 'p20008_i1_a24', 
-'p20008_i1_a25', 'p20008_i1_a26', 'p20008_i1_a27', 'p20008_i1_a28', 'p20008_i1_a29', 'p20008_i1_a30',
-'p20008_i2_a0', 'p20008_i2_a1', 'p20008_i2_a2', 'p20008_i2_a3', 'p20008_i2_a4', 'p20008_i2_a5', 
-'p20008_i2_a6', 'p20008_i2_a7', 'p20008_i2_a8', 'p20008_i2_a9', 'p20008_i2_a10', 'p20008_i2_a11', 
-'p20008_i2_a12', 'p20008_i2_a13', 'p20008_i2_a14', 'p20008_i2_a15', 'p20008_i2_a16', 'p20008_i2_a17',
-'p20008_i2_a18', 'p20008_i2_a19', 'p20008_i2_a20', 'p20008_i2_a21', 'p20008_i2_a22', 'p20008_i2_a23', 
-'p20008_i2_a24', 'p20008_i2_a25', 'p20008_i2_a26', 'p20008_i2_a27', 'p20008_i2_a28', 'p20008_i2_a29', 
-'p20008_i2_a30', 'p20008_i3_a0', 'p20008_i3_a1', 'p20008_i3_a2', 'p20008_i3_a3', 'p20008_i3_a4', 
-'p20008_i3_a5', 'p20008_i3_a6', 'p20008_i3_a7', 'p20008_i3_a8', 'p20008_i3_a9', 'p20008_i3_a10',
-'p20008_i3_a11', 'p20008_i3_a12', 'p20008_i3_a13', 'p20008_i3_a14', 'p20008_i3_a15', 'p20008_i3_a16',
-'p20008_i3_a17', 'p20008_i3_a18', 'p20008_i3_a19', 'p20008_i3_a20', 'p20008_i3_a21', 'p20008_i3_a22', 
-'p20008_i3_a23', 'p20008_i3_a24', 'p20008_i3_a25', 'p20008_i3_a26', 'p20008_i3_a27', 'p20008_i3_a28',
-'p20008_i3_a29', 'p20008_i3_a30']
-"""
--->
+2. Retrieving eids with matching ICD10 codes and earliest diagnosis dates for a basic Heavy Menstrual Bleeding (HMB) phenotype:
+```python
+import subprocess
+icd10s = [
+    "N92.0",  # excessive and frequent menstruation with regular cycle
+    "N92.1",  # excessive and frequent menstruation with irregular cycle
+    "N92.2",  # excessive menstruation at puberty
+    "N92.4"   # excessive bleeding in the premenopausal period
+]
+hmb_phenotype = ukb.get_icd10(icd10s)
+```
+```plaintext
+Searching 4 ICD10 codes...
+Found 14715 matching hospital records
+Found 0 matching death records
+Found 0 matching cancer records
+Operation complete: Found 14715 matching records in 32.05 seconds.
+```
+```
+hmb_phenotype.show()
+```
+```
++------+--------------+
+|   eid|diagnosis_date|
++------+--------------+
+| 0001 |   1999-05-12 |
+| 0002 |   1987-08-25 |
+| 0003 |   2003-11-03 |
+| 0004 |   1990-02-15 |
+| 0005 |   2001-01-30 |
++------+--------------+
+output truncated to first 5 lines
+```
+
+3. Looking up specific fields on the RAP:
+```python
+fields = ["p20004_i0_a0",  # self-reported operation (instance 0, array 0)
+          "p20010_i0_a0"]  # date of operation (instance 0, array 0)
+selfreport_operations_df = ukb.get_rap_field(fields)
+```
+```
+Searching 2 RAP fields...
+p20004_i0_a0 found in participant_0032
+p20010_i0_a0 found in participant_0033
+Operation complete: Found 1290 matching records in 4.98 seconds.
+```
+```
+selfreport_operations_df.show()
+```
+```
++------+--------------+--------------+
+|   eid| p20004_i0_a0 | p20010_i0_a0 |
++------+--------------+--------------+
+| 0001 |    1360      |   1998-02-22 |
+| 0002 |       0      |   2002-06-15 |
+| 0003 |    2456      |   2009-12-23 |
+| 0004 |     789      |   1985-02-14 |
+| 0005 |    1023      |   1991-05-01 |
++------+--------------+--------------+
+output truncated to first 5 lines
+```
+
+4. Making your own queries to the UK Biobank database using SQL with PySpark
+```python
+# query for selecting female participants only (p31 is the sex field, 0 is the code for females)
+query = f"SELECT DISTINCT eid FROM `{ukb.database}`.`participant_0001` WHERE p31 == 0"
+females_df = ukb.spark.sql(query)
+females_df.count()
+```
+```
+273157
+```
+
+For any issues or queries please [read the docs](https://adamelkholyy.github.io/ukbython/ukbython.html) or contact [A.El-Kholy@exeter.ac.uk](mailto:A.El-Kholy@exeter.ac.uk).
