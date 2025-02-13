@@ -35,8 +35,7 @@ gh download adamelkholyy/ukbython -p "ukbython.py"
 gh download adamelkholyy/ukbython -p "field_lookup.json"  
 ```
 
-## Examples
-1. Initialising `ukbython` and connecting to the UK Biobank database:
+Initialising `ukbython` and connecting to the UK Biobank database:
 ```python
 from ukbython import ukbython
 ukb = ukbython()
@@ -44,9 +43,9 @@ ukb = ukbython()
 ```
 Running on database app103356_20241205153134...
 ```
+## Examples
 
-
-2. Retrieving eids with matching ICD10 codes and earliest diagnosis dates for a basic Heavy Menstrual Bleeding (HMB) phenotype:
+1. Retrieving eids with matching ICD10 codes and earliest diagnosis dates for a basic Heavy Menstrual Bleeding (HMB) phenotype:
 ```python
 import subprocess
 icd10s = [
@@ -64,7 +63,7 @@ Found 0 matching death records
 Found 0 matching cancer records
 Operation complete: Found 14715 matching records in 32.05 seconds.
 ```
-```
+```python
 hmb_phenotype.show()
 ```
 ```
@@ -80,7 +79,7 @@ hmb_phenotype.show()
 output truncated to first 5 lines
 ```
 
-3. Looking up specific fields on the RAP:
+2. Looking up specific fields on the RAP:
 ```python
 fields = ["p20004_i0_a0",  # self-reported operation (instance 0, array 0)
           "p20010_i0_a0"]  # date of operation (instance 0, array 0)
@@ -90,9 +89,9 @@ selfreport_operations_df = ukb.get_rap_field(fields)
 Searching 2 RAP fields...
 p20004_i0_a0 found in participant_0032
 p20010_i0_a0 found in participant_0033
-Operation complete: Found 1290 matching records in 4.98 seconds.
+Operation complete: Found 502131 matching records in 14.26 seconds.
 ```
-```
+```python
 selfreport_operations_df.show()
 ```
 ```
@@ -108,7 +107,7 @@ selfreport_operations_df.show()
 output truncated to first 5 lines
 ```
 
-4. Making your own queries to the UK Biobank database using SQL with PySpark
+3. Making your own queries to the UK Biobank database using SQL with PySpark
 ```python
 # query for selecting female participants only (p31 is the sex field, 0 is the code for females)
 query = f"SELECT DISTINCT eid FROM `{ukb.database}`.`participant_0001` WHERE p31 == 0"
@@ -119,4 +118,4 @@ females_df.count()
 273157
 ```
 
-For any issues or queries please [read the docs](https://adamelkholyy.github.io/ukbython/ukbython.html) or contact [A.El-Kholy@exeter.ac.uk](mailto:A.El-Kholy@exeter.ac.uk).
+For any issues or queries please [read the docs](https://adamelkholyy.github.io/ukbython/ukbython.html) or contact [A.El-Kholy@exeter.ac.uk](mailto:A.El-Kholy@exeter.ac.uk)
