@@ -1,5 +1,10 @@
 # ukbython: Phenotype Derivation Tools for the UK Biobank RAP     
-<strong>Adam El Kholy | [A.El-Kholy@exeter.ac.uk](mailto:A.El-Kholy@exeter.ac.uk) | Last updated: 13/02/2025   </strong>   
+<strong>Adam El Kholy | [A.El-Kholy@exeter.ac.uk](mailto:A.El-Kholy@exeter.ac.uk) | Last updated: 13/02/2025       
+
+
+</strong>   
+
+*All data shown in this README is synthetic*
 
 ## [Read the docs here!](https://adamelkholyy.github.io/ukbython/ukbython.html) 
 
